@@ -37,6 +37,8 @@ import java.sql.Time;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static com.amazon.ion.Timestamp.Precision.FRACTION;
+
 /**
  * Generate specific scalar type of Ion data randomly, for some specific type, e.g. String, Decimal, Timestamp, users can put specifications on these types of Ion data.
  */
@@ -307,6 +309,7 @@ class WriteRandomIonValues {
         // Assume if 'valid_values' provided in ISL file, constraint 'type' is optional, else constraint 'type' is required.
         Map<String, ReparsedConstraint> constraintMap = parsedTypeDefinition.getConstraintMap();
         ReparsedConstraint validValues = constraintMap.get("valid_values");
+
         // TODO: Add a step to solve the conflicts: valid_values coexists with other type-specified constraints.
         if (validValues != null && !((ValidValues) validValues).isRange()) {
             IonValue validValue = getRandomValueFromList(((ValidValues) validValues).getValidValues());
@@ -368,42 +371,28 @@ class WriteRandomIonValues {
      */
     public static String constructString(Map<String, ReparsedConstraint> constraintMap) {
         Random random = new Random();
-        int codepointsLength;
-        String constructedString = null;
-        Set<String> constraintsSet = constraintMap.keySet();
-        if (!VALID_STRING_SYMBOL_CONSTRAINTS.containsAll(constraintMap.keySet())) {
-            throw new IllegalStateException("The constraints in ISL cannot be processed by Ion Data Generator.");
-        } else {
-            int size = constraintMap.size();
-            switch (size) {
-                case 0:
-                    // If there is no constraints provided, a randomly constructed string with
-                    // preset Unicode codepoints length will be generated.
-                    codepointsLength = random.nextInt(20);
-                    constructedString = constructStringFromCodepointLength(codepointsLength);
-                    break;
-                case 1:
-                    String constraintName = constraintsSet.iterator().next();
-                    switch (constraintName) {
-                        case "regex":
-                            Regex regex = (Regex) constraintMap.get("regex");
-                            String pattern = regex.getPattern();
-                            RgxGen rgxGen = new RgxGen(pattern);
-                            constructedString = rgxGen.generate();
-                            break;
-                        case "codepoint_length":
-                            CodepointLength codepointLength = (CodepointLength) constraintMap.get("codepoint_length");
-                            codepointsLength = codepointLength.getRange().getRandomIntValueFromRange();
-                            constructedString = constructStringFromCodepointLength(codepointsLength);
-                            break;
-                        default:
-                            throw new IllegalStateException ("The provided constraints cannot be processed in Ion Data Generator.");
-                    }
-                    break;
-                default:
-                    throw new IllegalStateException("The constraints combination in ISL file is not supported.");
-            }
-            return constructedString;
+
+        //TODO: Clone contraintMap on access?
+        Regex regex = (Regex)constraintMap.remove("regex");
+        CodepointLength codepoint_length = (CodepointLength)constraintMap.remove("codepoint_length");
+
+        if (!constraintMap.isEmpty()) {
+            throw new IllegalStateException ("Found unhandled constraints : " + constraintMap.values());
+        }
+
+        if (regex != null && codepoint_length != null) {
+            throw new IllegalStateException ("Can only handle one of : " + Arrays.asList(regex, codepoint_length));
+        } else if (regex != null) {
+            String pattern = regex.getPattern();
+            RgxGen rgxGen = new RgxGen(pattern);
+            return rgxGen.generate();
+        } else if (codepoint_length != null) {
+            int length = codepoint_length.getRange().getRandomIntValueFromRange();
+            return constructStringFromCodepointLength(length);
+        } else { // no constraints
+            // If there is no constraints provided, a randomly constructed string with
+            // preset Unicode codepoints length will be generated.
+            return constructStringFromCodepointLength(random.nextInt(20));
         }
     }
 
@@ -484,6 +473,7 @@ class WriteRandomIonValues {
      * @return the constructed decimal.
      * @throws Exception if error occurs when parsing the constraints.
      */
+    //TODO: We should share BigDecimal construction for all numeric types, then extract relevant precisions
     public static BigDecimal constructDecimal(Map<String, ReparsedConstraint> constraintMap) throws Exception {
         Random random = new Random();
         Integer scale = null;
@@ -629,47 +619,31 @@ class WriteRandomIonValues {
             default:
                 throw new IllegalStateException("The constraints combination in ISL file is not supported.");
         }
+        // TODO: Should be able to re-use logic used in constructDecimal
         // Generate a random millisecond within the provided range.
         BigDecimal randomMillis = lowerBoundMillis.add(new BigDecimal(random.nextDouble()).multiply(upperBoundMillis.subtract(lowerBoundMillis)));
         // Generate timestamp based on the provided millisecond value and precision.
         Timestamp regeneratedTimestamp = Timestamp.forMillis(randomMillis, localOffset);
-        int year = regeneratedTimestamp.getYear();
-        int month = regeneratedTimestamp.getMonth();
-        int day = regeneratedTimestamp.getDay();
-        int hour = regeneratedTimestamp.getHour();
-        int minute = regeneratedTimestamp.getMinute();
+
+        int year;
+        int month  = 0;
+        int day    = 0;
+        int hour   = 0;
+        int minute = 0;
+        BigDecimal seconds = BigDecimal.ZERO;
+
         switch (precision) {
-            case YEAR:
-                timestamp = Timestamp.forYear(year);
-                break;
-            case MONTH:
-                timestamp = Timestamp.forMonth(year, month);
-                break;
-            case DAY:
-                timestamp = Timestamp.forDay(year, month, day);
-                break;
-            case MINUTE:
-                timestamp = Timestamp.forMinute(year, month, day, hour, minute, localOffset);
-                break;
-            case SECOND:
-                timestamp = Timestamp.forMillis(randomMillis, localOffset);
-                break;
-            case FRACTION:
-                int scale = random.nextInt(20);
-                timestamp = Timestamp.forSecond(
-                        random.nextInt(9998) + 1,
-                        random.nextInt(12) + 1,
-                        random.nextInt(28) + 1, // Use max 28 for simplicity. Not including up to 31 is not going to affect the measurement.
-                        random.nextInt(24),
-                        random.nextInt(60),
-                        randomSecondWithFraction(random,scale),
-                        localOffset
-                );
+            case FRACTION:// intentional fall-through, throughout
+            case SECOND: seconds = FRACTION == precision ? regeneratedTimestamp.getDecimalSecond() : BigDecimal.valueOf(regeneratedTimestamp.getSecond());
+            case MINUTE: minute = regeneratedTimestamp.getMinute();
+            case DAY: day = regeneratedTimestamp.getDay();
+            case MONTH: month = regeneratedTimestamp.getMonth();
+            case YEAR: year = regeneratedTimestamp.getYear();
                 break;
             default:
                 throw new IllegalStateException();
         }
-        return timestamp;
+        return Timestamp.forSecond(year, month, day, hour, minute, seconds, localOffset);
     }
 
     /**
