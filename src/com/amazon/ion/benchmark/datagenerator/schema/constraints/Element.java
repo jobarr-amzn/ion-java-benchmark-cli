@@ -1,8 +1,8 @@
-package com.amazon.ion.benchmark.schema.constraints;
+package com.amazon.ion.benchmark.datagenerator.schema.constraints;
 
 import com.amazon.ion.IonValue;
-import com.amazon.ion.benchmark.IonSchemaUtilities;
-import com.amazon.ion.benchmark.schema.ReparsedType;
+import com.amazon.ion.benchmark.datagenerator.IonSchemaUtilities;
+import com.amazon.ion.benchmark.datagenerator.schema.ReparsedType;
 
 public class Element implements ReparsedConstraint {
     private ReparsedType element;

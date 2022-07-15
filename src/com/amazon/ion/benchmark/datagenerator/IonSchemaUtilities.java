@@ -1,4 +1,4 @@
-package com.amazon.ion.benchmark;
+package com.amazon.ion.benchmark.datagenerator;
 
 import com.amazon.ion.IonDatagram;
 import com.amazon.ion.IonList;
@@ -10,7 +10,7 @@ import com.amazon.ion.IonSystem;
 import com.amazon.ion.IonType;
 import com.amazon.ion.IonValue;
 import com.amazon.ion.Timestamp;
-import com.amazon.ion.benchmark.schema.ReparsedType;
+import com.amazon.ion.benchmark.datagenerator.schema.ReparsedType;
 import com.amazon.ion.system.IonReaderBuilder;
 import com.amazon.ion.system.IonSystemBuilder;
 import com.amazon.ionschema.AuthorityFilesystem;

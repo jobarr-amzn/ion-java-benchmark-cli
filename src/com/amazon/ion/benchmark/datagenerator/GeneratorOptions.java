@@ -1,4 +1,4 @@
-package com.amazon.ion.benchmark;
+package com.amazon.ion.benchmark.datagenerator;
 
 import com.amazon.ionschema.Schema;
 

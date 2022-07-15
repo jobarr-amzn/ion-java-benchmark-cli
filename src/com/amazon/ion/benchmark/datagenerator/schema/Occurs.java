@@ -1,10 +1,10 @@
-package com.amazon.ion.benchmark.schema;
+package com.amazon.ion.benchmark.datagenerator.schema;
 
 import com.amazon.ion.IonSymbol;
 import com.amazon.ion.IonSystem;
 import com.amazon.ion.IonValue;
-import com.amazon.ion.benchmark.schema.constraints.QuantifiableConstraints;
-import com.amazon.ion.benchmark.schema.constraints.Range;
+import com.amazon.ion.benchmark.datagenerator.schema.constraints.Range;
+import com.amazon.ion.benchmark.datagenerator.schema.constraints.QuantifiableConstraints;
 import com.amazon.ion.system.IonSystemBuilder;
 
 /**

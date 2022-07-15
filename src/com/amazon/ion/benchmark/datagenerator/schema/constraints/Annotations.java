@@ -1,4 +1,4 @@
-package com.amazon.ion.benchmark.schema.constraints;
+package com.amazon.ion.benchmark.datagenerator.schema.constraints;
 
 import com.amazon.ion.IonList;
 import com.amazon.ion.IonValue;

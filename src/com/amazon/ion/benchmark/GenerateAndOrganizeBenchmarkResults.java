@@ -4,6 +4,7 @@ import com.amazon.ion.IonList;
 import com.amazon.ion.IonReader;
 import com.amazon.ion.IonString;
 import com.amazon.ion.IonType;
+import com.amazon.ion.benchmark.datagenerator.ReadGeneralConstraints;
 import com.amazon.ion.system.IonReaderBuilder;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;

@@ -1,14 +1,17 @@
-package com.amazon.ion.benchmark;
+package com.amazon.ion.benchmark.datagenerator;
 
 import com.amazon.ion.IonLoader;
 import com.amazon.ion.IonStruct;
 import com.amazon.ion.IonSystem;
 import com.amazon.ion.IonValue;
 import com.amazon.ion.IonWriter;
-import com.amazon.ion.benchmark.schema.ReparsedType;
+import com.amazon.ion.benchmark.Format;
+import com.amazon.ion.benchmark.datagenerator.schema.ReparsedType;
 import com.amazon.ion.system.IonBinaryWriterBuilder;
 import com.amazon.ion.system.IonSystemBuilder;
 import com.amazon.ion.system.IonTextWriterBuilder;
+import com.amazon.ionelement.api.Ion;
+import com.amazon.ionelement.api.IonElement;
 import com.amazon.ionschema.Schema;
 import com.amazon.ionschema.Type;
 
@@ -42,7 +45,7 @@ public class ReadGeneralConstraints {
             long currentSize = 0;
             // Determine how many values should be written before the writer.flush(), and this process aims to reduce the execution time of writer.flush().
             while (currentSize <= 0.05 * size) {
-                IonValue constructedData = DataConstructor.constructIonData(parsedTypeDefinition);
+                IonElement constructedData = DataConstructor.constructIonData(parsedTypeDefinition);
                 constructedData.writeTo(writer);
                 count ++;
                 writer.flush();
@@ -50,7 +53,7 @@ public class ReadGeneralConstraints {
             }
             while (currentSize <= size) {
                 for (int i = 0; i < count; i++) {
-                    IonValue constructedData = DataConstructor.constructIonData(parsedTypeDefinition);
+                    IonElement constructedData = DataConstructor.constructIonData(parsedTypeDefinition);
                     constructedData.writeTo(writer);
                 }
                 writer.flush();

@@ -1,4 +1,4 @@
-package com.amazon.ion.benchmark;
+package com.amazon.ion.benchmark.datagenerator;
 
 /*
  * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -15,6 +15,7 @@ package com.amazon.ion.benchmark;
  * permissions and limitations under the License.
  */
 
+import com.amazon.ion.Decimal;
 import com.amazon.ion.IonList;
 import com.amazon.ion.IonReader;
 import com.amazon.ion.IonSequence;
@@ -26,21 +27,26 @@ import com.amazon.ion.IonType;
 import com.amazon.ion.IonValue;
 import com.amazon.ion.IonWriter;
 import com.amazon.ion.Timestamp;
-import com.amazon.ion.benchmark.schema.ReparsedType;
-import com.amazon.ion.benchmark.schema.constraints.Annotations;
-import com.amazon.ion.benchmark.schema.constraints.Contains;
-import com.amazon.ion.benchmark.schema.constraints.Element;
-import com.amazon.ion.benchmark.schema.constraints.Fields;
-import com.amazon.ion.benchmark.schema.constraints.OrderedElements;
-import com.amazon.ion.benchmark.schema.constraints.QuantifiableConstraints;
-import com.amazon.ion.benchmark.schema.constraints.Range;
-import com.amazon.ion.benchmark.schema.constraints.Regex;
-import com.amazon.ion.benchmark.schema.constraints.ReparsedConstraint;
-import com.amazon.ion.benchmark.schema.constraints.TimestampPrecision;
-import com.amazon.ion.benchmark.schema.constraints.ValidValues;
+import com.amazon.ion.benchmark.datagenerator.generate.DataGenerator;
+import com.amazon.ion.benchmark.datagenerator.schema.ReparsedType;
+import com.amazon.ion.benchmark.datagenerator.schema.constraints.Annotations;
+import com.amazon.ion.benchmark.datagenerator.schema.constraints.Contains;
+import com.amazon.ion.benchmark.datagenerator.schema.constraints.Element;
+import com.amazon.ion.benchmark.datagenerator.schema.constraints.Fields;
+import com.amazon.ion.benchmark.datagenerator.schema.constraints.OrderedElements;
+import com.amazon.ion.benchmark.datagenerator.schema.constraints.QuantifiableConstraints;
+import com.amazon.ion.benchmark.datagenerator.schema.constraints.Range;
+import com.amazon.ion.benchmark.datagenerator.schema.constraints.Regex;
+import com.amazon.ion.benchmark.datagenerator.schema.constraints.ReparsedConstraint;
+import com.amazon.ion.benchmark.datagenerator.schema.constraints.TimestampPrecision;
+import com.amazon.ion.benchmark.datagenerator.schema.constraints.ValidValues;
 import com.amazon.ion.system.IonBinaryWriterBuilder;
 import com.amazon.ion.system.IonReaderBuilder;
 import com.amazon.ion.system.IonSystemBuilder;
+import com.amazon.ionelement.api.Ion;
+import com.amazon.ionelement.api.IonElement;
+import com.amazon.ionelement.api.StructElement;
+import com.amazon.ionelement.api.StructField;
 import com.github.curiousoddman.rgxgen.RgxGen;
 
 import java.io.BufferedInputStream;
@@ -66,7 +72,7 @@ import java.util.concurrent.ThreadLocalRandom;
 /**
  * Generate specific scalar type of Ion data randomly, for some specific type, e.g. String, Decimal, Timestamp, users can put specifications on these types of Ion data.
  */
-class DataConstructor {
+public class DataConstructor {
     // The constant defined below are used as placeholder in the method WriteRandomIonValues.writeRequestedSizeFile.
     final static private IonSystem SYSTEM = IonSystemBuilder.standard().build();
     final static private List<Integer> DEFAULT_RANGE = Arrays.asList(0, 0x10FFFF);
@@ -202,8 +208,8 @@ class DataConstructor {
      * @param parsedTypeDefinition is parsed from ion schema file as IonStruct format, it contains the top-level constraints.
      * @return constructed ion data.
      */
-    public static IonValue constructIonData(ReparsedType parsedTypeDefinition) {
-        IonValue result;
+    public static IonElement constructIonData(ReparsedType parsedTypeDefinition) {
+        IonElement result;
         // The first step is to check whether parsedTypeDefinition contains 'valid_values'. The reason we prioritize checking
         // 'valid_values' is that the constraint 'type' might not be contained in the type definition, in that case we cannot trigger
         // the following data constructing process.
@@ -274,12 +280,14 @@ class DataConstructor {
      * and the value is constraint value in ReparsedConstraint format.
      * @return the constructed IonStruct value.
      */
-    private static IonStruct constructIonStruct(Map<String, ReparsedConstraint> constraintMapClone) {
+    public static IonElement constructIonStruct(Map<String, ReparsedConstraint> constraintMapClone) {
+
+        List<StructField> fieldList = new ArrayList<>();
+
         Fields fields = (Fields)constraintMapClone.remove("fields");
         Element element = (Element)constraintMapClone.remove("element");
         QuantifiableConstraints container_length = (QuantifiableConstraints)constraintMapClone.remove("container_length");
         Random random = new Random();
-        IonStruct constructedIonStruct = SYSTEM.newEmptyStruct();
         // Check if there is unhandled constraint provided.
         if (!constraintMapClone.isEmpty()) {
             throw new IllegalStateException ("Found unhandled constraints : " + constraintMapClone.values());
@@ -289,7 +297,7 @@ class DataConstructor {
         } else if (element != null) {
             int length = container_length == null ? DEFAULT_CONTAINER_LENGTH : container_length.getRange().getRandomQuantifiableValueFromRange().intValue();
             for (int i = 0; i < length; i++) {
-                constructedIonStruct.add(constructStringFromCodepointLength(random.nextInt(20)), constructIonData(element.getElement()));
+                fieldList.add(Ion.field(constructStringFromCodepointLength(random.nextInt(20)), constructIonData(element.getElement())));
             }
         } else {
             Map<String, ReparsedType> fieldMap = fields.getFieldMap();
@@ -301,11 +309,11 @@ class DataConstructor {
                 int occurs = ReparsedType.getOccurs(fieldTypeDefinition.getConstraintStruct());
                 int occurTime = occurs == -1 ? random.nextInt(2) : occurs;
                 for (int i = 0; i < occurTime; i++) {
-                    constructedIonStruct.add(entry.getKey(), constructIonData(fieldTypeDefinition));
+                    fieldList.add(Ion.field(entry.getKey(), constructIonData(fieldTypeDefinition)));
                 }
             }
         }
-        return constructedIonStruct;
+        return Ion.ionStructOf(fieldList);
     }
 
     /**
@@ -445,7 +453,7 @@ class DataConstructor {
      * and the value is constraint value in ReparsedConstraint format.
      * @return the constructed decimal.
      */
-    public static BigDecimal constructDecimal(Map<String, ReparsedConstraint> constraintMapClone) {
+    public static Decimal constructDecimal(Map<String, ReparsedConstraint> constraintMapClone) {
         Random random = new Random();
         // If there is no constraints provided, assign scale and precision with default values.
         int scaleValue = random.nextInt(DEFAULT_SCALE_UPPER_BOUND - DEFAULT_SCALE_LOWER_BOUND + 1) + DEFAULT_SCALE_LOWER_BOUND;
@@ -469,12 +477,12 @@ class DataConstructor {
                 rs.append(random.nextInt(10));
             }
             BigInteger unscaledValue = new BigInteger(rs.toString());
-            return new BigDecimal(unscaledValue, scaleValue);
+            return Decimal.valueOf(unscaledValue, scaleValue);
         } else {
             if (scale != null || precision != null) {
                 throw new IllegalStateException("Cannot handle 'valid_values' and constraint from " + VALID_DECIMAL_CONSTRAINTS + "at the same time.");
             } else {
-                return validValues.getRange().getRandomQuantifiableValueFromRange();
+                return Decimal.valueOf(validValues.getRange().getRandomQuantifiableValueFromRange());
             }
         }
     }

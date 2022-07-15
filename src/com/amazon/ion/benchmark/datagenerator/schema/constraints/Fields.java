@@ -1,9 +1,9 @@
-package com.amazon.ion.benchmark.schema.constraints;
+package com.amazon.ion.benchmark.datagenerator.schema.constraints;
 
 import com.amazon.ion.IonStruct;
 import com.amazon.ion.IonValue;
-import com.amazon.ion.benchmark.IonSchemaUtilities;
-import com.amazon.ion.benchmark.schema.ReparsedType;
+import com.amazon.ion.benchmark.datagenerator.IonSchemaUtilities;
+import com.amazon.ion.benchmark.datagenerator.schema.ReparsedType;
 
 import java.util.HashMap;
 import java.util.Map;

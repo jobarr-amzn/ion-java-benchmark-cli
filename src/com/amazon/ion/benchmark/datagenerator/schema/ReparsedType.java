@@ -1,20 +1,19 @@
-package com.amazon.ion.benchmark.schema;
+package com.amazon.ion.benchmark.datagenerator.schema;
 
 import com.amazon.ion.IonStruct;
 import com.amazon.ion.IonType;
 import com.amazon.ion.IonValue;
-import com.amazon.ion.benchmark.schema.constraints.Annotations;
-import com.amazon.ion.benchmark.schema.constraints.Contains;
-import com.amazon.ion.benchmark.schema.constraints.Element;
-import com.amazon.ion.benchmark.schema.constraints.Fields;
-import com.amazon.ion.benchmark.schema.constraints.OrderedElements;
-import com.amazon.ion.benchmark.schema.constraints.QuantifiableConstraints;
-import com.amazon.ion.benchmark.schema.constraints.Regex;
-import com.amazon.ion.benchmark.schema.constraints.ReparsedConstraint;
-import com.amazon.ion.benchmark.schema.constraints.TimestampPrecision;
-import com.amazon.ion.benchmark.schema.constraints.ValidValues;
+import com.amazon.ion.benchmark.datagenerator.schema.constraints.Regex;
+import com.amazon.ion.benchmark.datagenerator.schema.constraints.ReparsedConstraint;
+import com.amazon.ion.benchmark.datagenerator.schema.constraints.ValidValues;
+import com.amazon.ion.benchmark.datagenerator.schema.constraints.Annotations;
+import com.amazon.ion.benchmark.datagenerator.schema.constraints.Contains;
+import com.amazon.ion.benchmark.datagenerator.schema.constraints.Element;
+import com.amazon.ion.benchmark.datagenerator.schema.constraints.Fields;
+import com.amazon.ion.benchmark.datagenerator.schema.constraints.OrderedElements;
+import com.amazon.ion.benchmark.datagenerator.schema.constraints.QuantifiableConstraints;
+import com.amazon.ion.benchmark.datagenerator.schema.constraints.TimestampPrecision;
 
-import java.lang.reflect.AnnotatedArrayType;
 import java.util.HashMap;
 import java.util.Map;
 

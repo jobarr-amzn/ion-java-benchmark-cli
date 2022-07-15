@@ -1,4 +1,4 @@
-package com.amazon.ion.benchmark;
+package com.amazon.ion.benchmark.datagenerator;
 
 import java.io.FilterOutputStream;
 import java.io.IOException;

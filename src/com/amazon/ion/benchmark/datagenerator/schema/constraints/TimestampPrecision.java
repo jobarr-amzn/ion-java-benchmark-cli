@@ -1,7 +1,7 @@
-package com.amazon.ion.benchmark.schema.constraints;
+package com.amazon.ion.benchmark.datagenerator.schema.constraints;
 
 import com.amazon.ion.*;
-import com.amazon.ion.benchmark.IonSchemaUtilities;
+import com.amazon.ion.benchmark.datagenerator.IonSchemaUtilities;
 
 import java.util.Random;
 

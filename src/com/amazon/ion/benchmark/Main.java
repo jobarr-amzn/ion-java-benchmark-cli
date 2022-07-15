@@ -1,5 +1,7 @@
 package com.amazon.ion.benchmark;
 
+import com.amazon.ion.benchmark.datagenerator.GeneratorOptions;
+import com.amazon.ion.benchmark.datagenerator.GeneratorOptionsValidator;
 import org.docopt.Docopt;
 
 import java.util.Map;
